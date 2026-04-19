@@ -596,11 +596,30 @@ local function AutoRaidRush()
                 task.wait(1)
                 local rushPart = workspace:FindFirstChild("BossRushPart")
                 if rushPart then hrp.CFrame = rushPart:GetPivot() end
+                
                 ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", "Rush Ticket")
                 ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", "Rush Ticket")
             end
         end)
+
     elseif game.PlaceId == RaidRushMapID then
+        local hasSkill = false
+        for _, isEnabled in pairs(Settings.Skills) do
+            if isEnabled then
+                hasSkill = true
+                break
+            end
+        end
+
+        if not hasSkill then
+            Fluent:Notify({
+                Title = "Warning",
+                Content = "Please select at least one skill first!",
+                Duration = 5
+            })
+            return
+        end
+
         task.spawn(function()
             local player = game.Players.LocalPlayer
             local playerGui = player:WaitForChild("PlayerGui")
@@ -616,11 +635,8 @@ local function AutoRaidRush()
             end
 
             task.wait(1)
-
-            if autoSkipBtn then 
-                clickGuiButton(autoSkipBtn) 
-            end
-
+            if autoSkipBtn then clickGuiButton(autoSkipBtn) end
+            
             PressKey("J")
 
             while Settings.AutoRaidRush do
@@ -632,9 +648,7 @@ local function AutoRaidRush()
                     
                     if Settings.Tool then
                         local tool = player.Backpack:FindFirstChild(Settings.Tool)
-                        if tool then
-                            hum:EquipTool(tool)
-                        end
+                        if tool then hum:EquipTool(tool) end
                     end
 
                     if hrp and hum then
@@ -642,10 +656,9 @@ local function AutoRaidRush()
                         hrp.CFrame = CFrame.new(TargetPos) * CFrame.Angles(math.rad(-90), 0, 0)
                         hrp.Velocity = Vector3.new(0, 0, 0)
                         hrp.RotVelocity = Vector3.new(0, 0, 0)
+                        
                         for key, isEnabled in pairs(Settings.Skills) do
-                            if isEnabled then
-                                PressKey(key)
-                            end
+                            if isEnabled then PressKey(key) end
                         end
                     end
                 end)
@@ -653,10 +666,9 @@ local function AutoRaidRush()
                 local endGui = raidGui:FindFirstChild("End")
                 if endGui and endGui.Visible then 
                     task.wait(1)
-                    if ReplayBtn then 
-                        clickGuiButton(ReplayBtn) 
-                    end
+                    if ReplayBtn then clickGuiButton(ReplayBtn) end
                 end
+                task.wait()
             end
         end)
     end
