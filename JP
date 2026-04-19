@@ -489,110 +489,6 @@ local function BossRushClickAction()
     end
 end
 
-local function AutoRaidRush()
-    local MainMapID = 110029522258215
-    local RaidRushMapID = 123886389200671
-    local TargetPos = Vector3.new(11.02020263671875, 85, -294.40069580078125)
-
-    local hasSkill = false
-    for _, isEnabled in pairs(Settings.Skills) do
-        if isEnabled then
-            hasSkill = true
-            break
-        end
-    end
-
-    if not hasSkill then
-        Fluent:Notify({
-            Title = "Notification",
-            Content = "Please select at least one skill first",
-            Duration = 5
-        })
-        return false
-    end
-
-    Fluent:Notify({
-        Title = "Jood Piece 2",
-        Content = "The Auto Raid Rush system is starting up",
-        Duration = 3
-    })
-
-    if game.PlaceId == MainMapID then
-        pcall(function()
-            local hrp = getHRP()
-            if hrp then
-                BossRushClickAction()
-                task.wait(1)
-                local rushPart = workspace:FindFirstChild("BossRushPart")
-                if rushPart then hrp.CFrame = rushPart:GetPivot() end
-                ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", "Rush Ticket")
-                ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", "Rush Ticket")
-            end
-        end)
-    elseif game.PlaceId == RaidRushMapID then
-        task.spawn(function()
-            local player = game.Players.LocalPlayer
-            local playerGui = player:WaitForChild("PlayerGui")
-            local raidGui = playerGui:WaitForChild("Raid")
-            local startBtn = raidGui:WaitForChild("Start", 5)
-            local autoSkipBtn = raidGui:WaitForChild("AutoSkip", 5)
-            local ReplayBtn = raidGui:WaitForChild("Replay", 5)
-
-            if startBtn then
-                clickGuiButton(startBtn)
-                task.wait(0.2)
-                clickGuiButton(startBtn)
-            end
-
-            task.wait(1)
-
-            if autoSkipBtn then 
-                clickGuiButton(autoSkipBtn) 
-            end
-
-            PressKey("J")
-
-            while Settings.AutoRaidRush do
-                pcall(function()
-                    local character = player.Character
-                    if not character then return end
-                    local hrp = character:FindFirstChild("HumanoidRootPart")
-                    local hum = character:FindFirstChildOfClass("Humanoid")
-                    
-                    if Settings.Tool then
-                        local tool = player.Backpack:FindFirstChild(Settings.Tool)
-                        if tool then
-                            hum:EquipTool(tool)
-                        end
-                    end
-
-                    if hrp and hum then
-                        hum.PlatformStand = true
-                        hrp.CFrame = CFrame.new(TargetPos) * CFrame.Angles(math.rad(-90), 0, 0)
-                        hrp.Velocity = Vector3.new(0, 0, 0)
-                        hrp.RotVelocity = Vector3.new(0, 0, 0)
-                        for key, isEnabled in pairs(Settings.Skills) do
-                            if isEnabled then
-                                PressKey(key)
-                            end
-                        end
-                    end
-                end)
-                
-                local endGui = raidGui:FindFirstChild("End")
-                if endGui and endGui.Visible then 
-                    task.wait(1)
-                    if ReplayBtn then 
-                        clickGuiButton(ReplayBtn) 
-                    end
-                end
-                task.wait()
-            end
-        end)
-    end
-    return true
-end
-
 local function AutoRaid()
     local MainMapID = 110029522258215 
     local RaidMapID = 123886389200671
@@ -1199,22 +1095,13 @@ Tabs.Boss:AddToggle("AutoSummon", {
     end
 })
 
-local RaidRushToggle = Tabs.Raid:AddToggle("AutoRaidRush", {
+Tabs.Raid:AddToggle("AutoRaidRush", {
     Title = "Auto Raid Rush",
     Default = false,
     Callback = function(v)
+        Settings.AutoRaidRush = v
         if v then
-            local canStart = AutoRaidRush()
-            if not canStart then
-                Settings.AutoRaidRush = false
-                task.spawn(function()
-                    task.wait(0.1)
-                end)
-            else
-                Settings.AutoRaidRush = true
-            end
-        else
-            Settings.AutoRaidRush = false
+            AutoRaidRush()
         end
     end
 })
