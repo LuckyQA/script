@@ -453,7 +453,7 @@ local function AutoRaidRush()
 
     Fluent:Notify({
         Title = "Jood Piece 2",
-        Content = "ระบบ Auto Raid Rush กำลังเริ่มทำงาน...",
+        Content = "The Auto Raid Rush system is starting up",
         Duration = 3
     })
 
