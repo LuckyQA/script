@@ -429,6 +429,66 @@ local function GetAllRaidMobs()
     return mobs
 end
 
+local function BossRushClickAction()
+
+    local npc = workspace.NPC:FindFirstChild("BossRushNPC")
+
+    if npc then
+        local myHRP = getHRP()
+        local char = player.Character
+
+        if myHRP and char then
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:UnequipTools()
+            end
+
+            task.wait(0.05)
+
+            local camera = workspace.CurrentCamera
+            local npcPivot = npc:GetPivot()
+            local npcPos = npcPivot.Position
+
+            myHRP.CFrame = npcPivot * CFrame.new(0,0,-1.8)
+
+            local lookPos = Vector3.new(npcPos.X, myHRP.Position.Y, npcPos.Z)
+            myHRP.CFrame = CFrame.lookAt(myHRP.Position, lookPos)
+
+            local camOffset = Vector3.new(3,3,7)
+            local newCamPos = (myHRP.CFrame * CFrame.new(camOffset)).Position
+
+            camera.CFrame = CFrame.lookAt(
+                newCamPos,
+                npcPos
+            )
+
+			ReplicatedStorage.System.Inv.Inventory:InvokeServer("Remove","Rush Ticket")
+
+            task.wait(0.2)
+
+            local viewport = camera.ViewportSize
+            local centerX = (viewport.X / 2)
+            local centerY = (viewport.Y / 2) - 20
+
+            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+            task.wait(0.05)
+            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+
+            task.wait(0.1)
+
+            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+            task.wait(0.05)
+            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+
+			task.wait(0.1)
+
+            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
+            task.wait(0.05)
+            VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
+        end
+    end
+end
+
 local function AutoRaidRush()
     local MainMapID = 110029522258215
     local RaidRushMapID = 123886389200671
