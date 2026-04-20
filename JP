@@ -59,7 +59,7 @@ local Settings = {
     AutoSkill = false,
 	AutoRaid = false,
 	AutoRaidRush = false,
-	AutoVon = false,
+	AutoSungjinwoo = false,
 	AutoGojo = false,
 	AutoSukuna = false,
 	AutoFlashy = false,
@@ -731,6 +731,20 @@ local function AutoSummonKokushiboLoop()
     end
 end
 
+local function AutoSummonSungjinwooLoop()
+    while Settings.AutoSungjinwoo do
+        task.wait(0.5)
+        pcall(function()
+            local bossIsland = workspace:FindFirstChild("Mobs") and workspace.Mobs:FindFirstChild("Ocean")
+            local SungjinwooExist = bossIsland and bossIsland:FindFirstChild("Sung Jinwoo")
+
+            if not SungjinwooExist then
+                game:GetService("ReplicatedStorage"):WaitForChild("System"):WaitForChild("Summon"):FireServer(unpack({"Sung Jinwoo"}))
+            end
+        end)
+    end
+end
+
 local function DioClickAction()
     local dioNPC = workspace.NPC:FindFirstChild("DioNPC")
     if dioNPC then
@@ -817,48 +831,6 @@ local function GojoClickAction()
     end
 end
 
-local function VonClickAction()
-    local vonNPC = workspace.NPC:FindFirstChild("SummonVon")
-
-    if vonNPC then
-        local myHRP = getHRP()
-        local char = player.Character
-
-        if myHRP and char then
-            local humanoid = char:FindFirstChildOfClass("Humanoid")
-            if humanoid then
-                humanoid:UnequipTools()
-            end
-
-			local targetCFrame = vonNPC:GetPivot() * CFrame.new(0, 0, -3)
-            myHRP.CFrame = CFrame.lookAt(targetCFrame.Position, vonNPC:GetPivot().Position)
-
-            local camera = workspace.CurrentCamera
-            local npcPos = vonNPC:GetPivot().Position
-            myHRP.CFrame = CFrame.lookAt(npcPos + (vonNPC:GetPivot().LookVector * -4), npcPos)
-            camera.CameraType = Enum.CameraType.Scriptable
-            camera.CFrame = CFrame.lookAt(
-                npcPos + Vector3.new(0, 2, 5),
-                npcPos
-            )
-
-            task.wait()
-
-            local viewportSize = camera.ViewportSize
-            local centerX = viewportSize.X / 2
-            local centerY = viewportSize.Y / 2
-
-            for i = 1, 3 do
-                VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, true, game, 0)
-                task.wait()
-                VirtualInputManager:SendMouseButtonEvent(centerX, centerY, 0, false, game, 0)
-                task.wait()
-            end
-            camera.CameraType = Enum.CameraType.Custom
-        end
-    end
-end
-
 local function AutoSummonGojoLoop()
     while Settings.AutoGojo do
         task.wait(0.5)
@@ -875,27 +847,6 @@ local function AutoSummonGojoLoop()
                     task.wait()
                 end
                 GojoClickAction()
-            end
-        end)
-    end
-end
-
-local function AutoSummonVonLoop()
-    while Settings.AutoVon do
-        task.wait(0.5)
-        pcall(function()
-            local vonExist = false
-            local mobs = workspace:FindFirstChild("Mobs")
-            if mobs and mobs:FindFirstChild("Ocean") and mobs["Ocean"]:FindFirstChild("Von Joestar") then
-                vonExist = true
-            end
-            if not vonExist then
-                local hasArrow = player.Backpack:FindFirstChild("Von Soul") or player.Character:FindFirstChild("Von Soul")
-                if not hasArrow then
-                    ReplicatedStorage.System.Inv.Inventory:InvokeServer("Remove", "Von Soul")
-                    task.wait()
-                end
-                VonClickAction()
             end
         end)
     end
@@ -1031,13 +982,13 @@ Tabs.Main:AddToggle("AutoSkill", {
     end
 })
 
-Tabs.Boss:AddToggle("Auto Aizen", {
-    Title = "Auto Summon Aizen",
+Tabs.Boss:AddToggle("Auto Sung Jinwoo", {
+    Title = "Auto Summon Sung Jinwoo",
     Default = false,
     Callback = function(v)
-        Settings.AutoAizen = v
+        Settings.AutoSungjinwoo = v
         if v then
-            task.spawn(AutoSummonAizenLoop)
+            task.spawn(AutoSummonSungjinwooLoop)
         end
     end
 })
@@ -1053,13 +1004,13 @@ Tabs.Boss:AddToggle("Auto Kokushibo", {
     end
 })
 
-Tabs.Boss:AddToggle("AutoVon", {
-    Title = "Auto Summon Von",
+Tabs.Boss:AddToggle("Auto Aizen", {
+    Title = "Auto Summon Aizen",
     Default = false,
     Callback = function(v)
-        Settings.AutoVon = v
-        if v then 
-            task.spawn(AutoSummonVonLoop) 
+        Settings.AutoAizen = v
+        if v then
+            task.spawn(AutoSummonAizenLoop)
         end
     end
 })
