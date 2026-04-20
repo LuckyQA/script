@@ -66,13 +66,13 @@ local Settings = {
 	AutoAizen = false,
 	AutoKokushibo = false,
     AutoSummon = false,
+	AutoStore = false,
     Monsters = {},
     Tool = nil,
     Position = "Above",
     Distance = 10,
     Skills = { Z = false, X = false, C = false, V = false, F = false },
     SelectedCraftItem = "Gojo Meat",
-    SelectedStoreItem = {},
 }
 
 local IslandLocations = {
@@ -90,6 +90,7 @@ local IslandLocations = {
 	["Test Island"] = CFrame.new(982.5228881835938, 18.684206008911133, 2656.000732421875),
 	["Ninja Island"] = CFrame.new(-777.5966796875, 17.299196243286133, 1917.6015625),
 	["Demon Island"] = CFrame.new(-3166.12890625, 10.586348533630371, 1094.647705078125),
+	["CurseWomb Island"] = CFrame.new(-2584.629638671875, 26.33956527709961, -2875.589599609375),
 }
 
 local LevelConfigs = {
@@ -1129,44 +1130,6 @@ Tabs.Raid:AddToggle("AutoRaid", {
     end
 })
 
-local StoreDrop = Tabs.Auto:AddDropdown("StoreDrop", {
-    Title = "Select Items to Store",
-    Values = {"None"},
-    Multi = true,
-    Default = {},
-    Callback = function(v)
-        Settings.SelectedStoreItem = v
-    end
-})
-
-Tabs.Auto:AddButton({
-    Title = "Refresh Inventory",
-    Callback = function()
-        local items = {}
-        local function scan(c)
-            for _, t in ipairs(c:GetChildren()) do
-                if t:IsA("Tool") and not table.find(items, t.Name) then
-                    table.insert(items, t.Name)
-                end
-            end
-        end
-        scan(player.Backpack)
-        if player.Character then scan(player.Character) end
-        StoreDrop:SetValues(items)
-    end
-})
-
-Tabs.Auto:AddToggle("AutoStore", {
-    Title = "Auto Store",
-    Default = false,
-    Callback = function(v)
-        Settings.AutoStore = v
-        if v then 
-            task.spawn(AutoStoreLoop) 
-        end
-    end
-})
-
 Tabs.Auto:AddDropdown("CraftSelect", {
     Title = "Select Item",
     Values = { "Diamond Sword", "Six Seven", "Take Copter","Haki Book", "Sukuna Core", "Gokumonkyo", "True Hogyoku", "Mastered Core"},
@@ -1192,6 +1155,29 @@ Tabs.Auto:AddButton({
     Callback = function()
         ReplicatedStorage.System.CraftItem:FireServer(Settings.SelectedCraftItem)
     end
+})
+
+Tabs.Auto:AddToggle("AutoStoreToggle", {
+    Title = "Auto Store Items", 
+    Default = false,
+    Callback = function(v)
+        Settings.AutoStore = v
+        
+        if v then
+            task.spawn(function()
+                while Settings.AutoStore do
+                    for _, item in ipairs(player.Backpack:GetChildren()) do
+                        if item:IsA("Tool") and item.Name ~= Settings.Tool then
+                            pcall(function()
+                                ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", item.Name)
+                            end)
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+        end
+    end 
 })
 
 for _, k in ipairs({"Z", "X", "C", "V", "F"}) do
