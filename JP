@@ -852,6 +852,50 @@ local function AutoSummonGojoLoop()
     end
 end
 
+local function CreateClaimToggle(itemName, targetText, conflicts)
+    local toggleName = "Auto" .. itemName:gsub(" ", "")
+    getgenv()[toggleName] = false
+
+    Tabs.Auto:AddToggle(toggleName, {
+        Title = "Auto Claim " .. itemName,
+        Default = false,
+        Callback = function(v)
+            getgenv()[toggleName] = v
+            
+            if v then
+                if conflicts and type(conflicts) == "table" then
+                    for _, otherItem in pairs(conflicts) do
+                        local conflictToggleName = "Auto" .. otherItem:gsub(" ", "")
+                        getgenv()[conflictToggleName] = false
+                    end
+                end
+
+                task.spawn(function()
+                    while getgenv()[toggleName] do
+                        local playerGui = player:FindFirstChild("PlayerGui")
+                        local mainGui = playerGui and playerGui:FindFirstChild("MainGui")
+                        
+                        if mainGui then
+                            local itemPath = mainGui.GUARANTEE.Main:FindFirstChild(itemName)
+                            local label = itemPath and itemPath.Frame:FindFirstChild("TextLabel1", true)
+
+                            if label then
+                                local current, goal = label.Text:match("(%d+)/(%d+)")
+                                if current and goal and tonumber(current) >= tonumber(goal) then
+                                    game:GetService("ReplicatedStorage").System.Guarantee:FireServer(itemName)
+                                    task.wait(0.1)
+                                    game:GetService("ReplicatedStorage").System.Inv.Inventory:InvokeServer("Add", itemName)
+                                end
+                            end
+                        end
+                        task.wait(1)
+                    end
+                end)
+            end
+        end
+    })
+end
+
 local MonsterDrop = Tabs.Main:AddDropdown("MonsterDrop", {
     Title = "Select Monsters",
     Values = {"None"},
@@ -915,7 +959,7 @@ Tabs.Main:AddDropdown("PosDrop", {
 Tabs.Main:AddSlider("Dist", {
     Title = "Distance",
     Min = 1,
-    Max = 50,
+    Max = 25,
     Default = 10,
     Rounding = 1,
     Callback = function(v)
@@ -1108,28 +1152,74 @@ Tabs.Auto:AddButton({
     end
 })
 
-Tabs.Auto:AddToggle("AutoStoreToggle", {
-    Title = "Auto Store Items", 
-    Default = false,
-    Callback = function(v)
-        Settings.AutoStore = v
-        
-        if v then
-            task.spawn(function()
-                while Settings.AutoStore do
-                    for _, item in ipairs(player.Backpack:GetChildren()) do
-                        if item:IsA("Tool") and item.Name ~= Settings.Tool then
-                            pcall(function()
-                                ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", item.Name)
-                            end)
+_G.Toggles = _G.Toggles or {}
+
+local function CreateClaimToggle(itemName, targetText, conflicts)
+    local toggleKey = "Auto" .. itemName:gsub(" ", "")
+    getgenv()[toggleKey] = false
+
+    _G.Toggles[toggleKey] = Tabs.Auto:AddToggle(toggleKey, {
+        Title = "Auto Claim " .. itemName,
+        Default = false,
+        Callback = function(v)
+            getgenv()[toggleKey] = v
+            
+            if v then
+                if conflicts and type(conflicts) == "table" then
+                    for _, otherItem in pairs(conflicts) do
+                        local otherKey = "Auto" .. otherItem:gsub(" ", "")
+                        
+                        if _G.Toggles[otherKey] then
+                            getgenv()[otherKey] = false
+                            _G.Toggles[otherKey]:SetValue(false)
                         end
                     end
-                    task.wait(0.5)
                 end
-            end)
+
+                -- >>> Loop เช็คการ Claim <<<
+                task.spawn(function()
+                    while getgenv()[toggleKey] do
+                        local playerGui = player:FindFirstChild("PlayerGui")
+                        local mainGui = playerGui and playerGui:FindFirstChild("MainGui")
+                        
+                        if mainGui then
+                            local itemPath = mainGui.GUARANTEE.Main:FindFirstChild(itemName)
+                            local label = itemPath and itemPath.Frame:FindFirstChild("TextLabel1", true)
+
+                            if label then
+                                -- ดึงตัวเลขมาเช็คแบบ >= (รองรับกรณี 9/8)
+                                local current, goal = label.Text:match("(%d+)/(%d+)")
+                                if current and goal and tonumber(current) >= tonumber(goal) then
+                                    game:GetService("ReplicatedStorage").System.Guarantee:FireServer(itemName)
+                                    task.wait(0.1)
+                                    game:GetService("ReplicatedStorage").System.Inv.Inventory:InvokeServer("Add", itemName)
+                                end
+                            end
+                        end
+                        task.wait(1)
+                    end
+                end)
+            end
         end
-    end 
-})
+    })
+end
+
+CreateClaimToggle("Instakill Sword", "10/10 Boss Kill", nil)
+CreateClaimToggle("Sukuna Finger", "7/7 Boss Kill", nil)
+CreateClaimToggle("Six Eye", "35/35 Boss Kill", nil)
+CreateClaimToggle("Gokumonkyo", "15/15 Crafted", nil)
+CreateClaimToggle("Hogyoku", "8/8 Boss Kill", {"Aizen Sword"})
+CreateClaimToggle("Aizen Sword", "25/25 Boss Kill", {"Hogyoku"})
+CreateClaimToggle("Betrayer Cloak", "15/15 Boss Kill", {"Itachi Headband","Itachi Eye"})
+CreateClaimToggle("Itachi Headband", "5/5 Boss Kill", {"Itachi Eye","Betrayer Cloak"})
+CreateClaimToggle("Itachi Eye", "20/20 Boss Kill", {"Betrayer Cloak", "Itachi Headband"})
+CreateClaimToggle("UI Core", "25/25 Boss Kill", nil)
+CreateClaimToggle("Crescent Moon", "30/30 Boss Kill", {"Moon Katana"})
+CreateClaimToggle("Moon Katana", "50/50 Boss Kill", {"Crescent Moon"})
+CreateClaimToggle("Akaza Shirt", "25/25 Boss Kill", {"Ice Compass"})
+CreateClaimToggle("Ice Compass", "15/15 Boss Kill", {"Akaza Shirt"})
+CreateClaimToggle("Black Clothes", "25/25 Boss Kill", {"Kamish Dagger"})
+CreateClaimToggle("Kamish Dagger", "50/50 Boss Kill", {"Black Clothes"})
 
 for _, k in ipairs({"Z", "X", "C", "V", "F"}) do
     Tabs.Skills:AddToggle("Skill"..k, {
@@ -1236,110 +1326,6 @@ Tabs.Settings:AddToggle("AFK", {
         end
     end
 })
-
-local function GuaranteeHogyoku()
-    local playerGui = player:WaitForChild("PlayerGui", 20)
-    if not playerGui then return end
-
-    local targetLabelHogyoku = playerGui.MainGui.GUARANTEE.Main.Hogyoku.Frame:FindFirstChild("TextLabel1", true) 
-    if not targetLabelHogyoku then return end
-    local targetText = "8/8 Boss Kill"
-    local isClaimed = false
-
-    local function FireHogyoku()
-        if not isClaimed and targetLabelHogyoku.Text == targetText then
-            isClaimed = true
-            game:GetService("ReplicatedStorage").System.Guarantee:FireServer("Hogyoku")
-			task.wait(0.1)
-			ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", "Hogyoku")
-        elseif targetLabelHogyoku.Text ~= targetText then
-            isClaimed = false
-        end
-    end
-
-    targetLabelHogyoku:GetPropertyChangedSignal("Text"):Connect(FireHogyoku)
-    FireHogyoku()
-end
-
-local function GuaranteeItachiEye()
-    local playerGui = player:WaitForChild("PlayerGui", 20)
-    if not playerGui then return end
-
-    local targetLabel = playerGui.MainGui.GUARANTEE.Main:FindFirstChild("Itachi Eye") 
-	local targetLabelItachiEye = targetLabel.Frame:FindFirstChild("TextLabel1", true)
-    if not targetLabelItachiEye then return end
-    local targetText = "20/20 Boss Kill"
-    local isClaimed = false
-
-    local function FireItachiEye()
-        if not isClaimed and targetLabelItachiEye.Text == targetText then
-            isClaimed = true
-            game:GetService("ReplicatedStorage").System.Guarantee:FireServer("Itachi Eye")
-			task.wait(0.1)
-			ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", "Itachi Eye")
-        elseif targetLabelItachiEye.Text ~= targetText then
-            isClaimed = false
-        end
-    end
-
-    targetLabelItachiEye:GetPropertyChangedSignal("Text"):Connect(FireItachiEye)
-    FireItachiEye()
-end
-
-local function GuaranteeUICore()
-    local playerGui = player:WaitForChild("PlayerGui", 20)
-    if not playerGui then return end
-
-    local targetLabel = playerGui.MainGui.GUARANTEE.Main:FindFirstChild("UI Core") 
-	local targetLabelUICore = targetLabel.Frame:FindFirstChild("TextLabel1", true) 
-    if not targetLabelUICore then return end
-    local targetText = "25/25 Boss Kill"
-    local isClaimed = false
-
-    local function FireUICore()
-        if not isClaimed and targetLabelUICore.Text == targetText then
-            isClaimed = true
-            game:GetService("ReplicatedStorage").System.Guarantee:FireServer("UI Core")
-			task.wait(0.1)
-			ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", "UI Core")
-        elseif targetLabelUICore.Text ~= targetText then
-            isClaimed = false
-        end
-    end
-
-    targetLabelUICore:GetPropertyChangedSignal("Text"):Connect(FireUICore)
-    FireUICore()
-end
-
-local function GuaranteeMoonKatana()
-    local playerGui = player:WaitForChild("PlayerGui", 20)
-    if not playerGui then return end
-
-    local targetLabel = playerGui.MainGui.GUARANTEE.Main:FindFirstChild("Moon Katana") 
-	local targetLabelMoonKatana = targetLabel.Frame:FindFirstChild("TextLabel1", true) 
-    if not targetLabelMoonKatana then return end
-    local targetText = "50/50 Boss Kill"
-    local isClaimed = false
-
-    local function FireMoonKatana()
-        if not isClaimed and targetLabelMoonKatana.Text == targetText then
-            isClaimed = true
-            game:GetService("ReplicatedStorage").System.Guarantee:FireServer("Moon Katana")
-			task.wait(0.1)
-			ReplicatedStorage.System.Inv.Inventory:InvokeServer("Add", "Moon Katana")
-        elseif targetLabelMoonKatana.Text ~= targetText then
-            isClaimed = false
-        end
-    end
-
-    targetLabelMoonKatana:GetPropertyChangedSignal("Text"):Connect(FireMoonKatana)
-    FireMoonKatana()
-end
-
-task.spawn(GuaranteeHogyoku)
-task.spawn(GuaranteeItachiEye)
-task.spawn(GuaranteeUICore)
-task.spawn(GuaranteeMoonKatana)
 
 task.spawn(function()
     while true do
