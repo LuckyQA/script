@@ -1176,7 +1176,6 @@ local function CreateClaimToggle(itemName, targetText, conflicts)
                     end
                 end
 
-                -- >>> Loop เช็คการ Claim <<<
                 task.spawn(function()
                     while getgenv()[toggleKey] do
                         local playerGui = player:FindFirstChild("PlayerGui")
@@ -1187,7 +1186,6 @@ local function CreateClaimToggle(itemName, targetText, conflicts)
                             local label = itemPath and itemPath.Frame:FindFirstChild("TextLabel1", true)
 
                             if label then
-                                -- ดึงตัวเลขมาเช็คแบบ >= (รองรับกรณี 9/8)
                                 local current, goal = label.Text:match("(%d+)/(%d+)")
                                 if current and goal and tonumber(current) >= tonumber(goal) then
                                     game:GetService("ReplicatedStorage").System.Guarantee:FireServer(itemName)
