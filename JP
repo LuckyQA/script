@@ -248,7 +248,7 @@ local function AutoFarmLoop()
                 myHRP.CFrame = CFrame.lookAt(targetCFrame.Position, mobHRP.Position)
                 myHRP.Velocity = Vector3.new(0,0,0)
 
-                game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer({[1] = {[1] = "Skill",[2] = "A",},[2] = "",})
+                game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer({[1] = {[1] = "Skill",[2] = "A",},[2] = "",})
             end
         end)
     end
