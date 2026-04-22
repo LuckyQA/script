@@ -155,7 +155,7 @@ end
 task.spawn(function()
     while true do
         updateMobCache()
-        task.wait(0.05)
+        task.wait()
     end
 end)
 
