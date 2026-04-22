@@ -242,7 +242,7 @@ local function AutoFarmLoop()
     _G.FarmLoop = true
 
     while Settings.Enabled do
-        task.wait()
+        RunService.Heartbeat:Wait()
 
         local myHRP = getHRP()
         if not myHRP then continue end
