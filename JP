@@ -1085,7 +1085,7 @@ Tabs.Main:AddDropdown("PosDrop", {
 Tabs.Main:AddSlider("Dist", {
     Title = "Distance",
     Min = 1,
-    Max = 25,
+    Max = 30,
     Default = 10,
     Rounding = 1,
     Callback = function(v)
