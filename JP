@@ -54,6 +54,7 @@ local Tabs = {
 local Settings = {
     Enabled = false,
     AutoSkill = false,
+    AutoHit = false,
 	AutoRaid = false,
 	AutoRaidRush = false,
     AutoRaidInf = false,
@@ -263,6 +264,18 @@ local function StandAutoSkillLoop()
                         PressKey(key)
                     end
                 end
+            end)
+        end
+    end
+end
+
+local function StandAutoHitLoop()
+    while Settings.AutoHit do
+        task.wait(0.3)
+        if not Settings.Enabled then
+            pcall(function()
+                equipTool()
+                game:GetService("ReplicatedStorage").BridgeNet2.dataRemoteEvent:FireServer({[1] = {[1] = "Skill",[2] = "A",},[2] = "",})
             end)
         end
     end
@@ -1135,6 +1148,17 @@ Tabs.Main:AddToggle("AutoSkill", {
         Settings.AutoSkill = v
         if v then 
             task.spawn(StandAutoSkillLoop) 
+        end
+    end
+})
+
+Tabs.Main:AddToggle("AutoHit", {
+    Title = "Auto Hit",
+    Default = false,
+    Callback = function(v)
+        Settings.AutoHit = v
+        if v then 
+            task.spawn(StandAutoHitLoop) 
         end
     end
 })
