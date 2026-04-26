@@ -1420,7 +1420,6 @@ ClanDropdown:OnChanged(function(Value)
     SelectedClans = Value
 end)
 
--- Auto Race
 local RaceToggle = Tabs.Reroll:AddToggle("AutoRace", {
     Title = "Auto Roll Race",
     Default = false,
